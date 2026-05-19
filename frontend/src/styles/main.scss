@@ -199,7 +199,40 @@ ul, ol {
   }
 }
 
-// Vant组件覆盖
+// ===== 移动端全局适配 =====
+@media (max-width: 767px) {
+  body { font-size: 14px; }
+  h1 { font-size: 22px !important; }
+  h2 { font-size: 18px !important; }
+
+  /* 所有4列或5列的grid → 2列 */
+  [class*="grid"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  /* 某些列表应该堆叠成1列 */
+  .nav-grid,
+  .wineries-grid,
+  .knowledge-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* 内边距缩小 */
+  [style*="padding"] {
+    padding: 12px !important;
+  }
+
+  /* card 的内边距 */
+  [class*="card"] {
+    padding: 16px !important;
+  }
+
+  /* 大幅压缩 hero 区域的内边距 */
+  [style*="background"][style*="linear-gradient"] {
+    padding: 40px 16px !important;
+  }
+}
 :root {
   --van-primary-color: #{$primary-color};
   --van-success-color: #52c41a;
