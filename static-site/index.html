@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>酱酒研学平台</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background: #FFFFFF;
+      color: #1d1d1f;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 max(22px, calc(50vw - 500px));
+    }
+    
+    .logo {
+      font-size: 21px;
+      font-weight: 600;
+      color: #1d1d1f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logo-icon { font-size: 24px; }
+    
+    .nav-links { display: flex; gap: 32px; }
+    
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 400;
+      color: #1d1d1f;
+      text-decoration: none;
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+    
+    .nav-links a:hover { opacity: 1; }
+    .nav-links a.router-link-active { opacity: 1; font-weight: 500; }
+    
+    main { padding-top: 48px; min-height: 100vh; }
+    
+    .hero {
+      text-align: center;
+      padding: 120px 24px 100px;
+      background: linear-gradient(180deg, #f5f5f7 0%, #FFFFFF 100%);
+    }
+    
+    .hero h1 {
+      font-size: 80px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      line-height: 1.05;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero p {
+      font-size: 28px;
+      font-weight: 400;
+      color: #86868b;
+      max-width: 600px;
+      margin: 0 auto 48px;
+    }
+    
+    .hero-features {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    
+    .feature-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+    }
+    
+    .feature-icon { font-size: 64px; margin-bottom: 20px; }
+    .feature-card h3 { font-size: 24px; font-weight: 600; margin-bottom: 12px; color: #1d1d1f; }
+    .feature-card p { font-size: 16px; color: #86868b; line-height: 1.6; }
+    
+    .page-title {
+      font-size: 64px;
+      font-weight: 700;
+      text-align: center;
+      padding: 100px 24px 60px;
+      letter-spacing: -0.02em;
+      background: linear-gradient(180deg, #f5f5f7 0%, #FFFFFF 100%);
+    }
+    
+    .category-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      padding: 0 24px 60px;
+      flex-wrap: wrap;
+    }
+    
+    .category-tab {
+      padding: 12px 28px;
+      font-size: 17px;
+      font-weight: 500;
+      color: #1d1d1f;
+      background: #f5f5f7;
+      border: none;
+      border-radius: 980px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .category-tab:hover { background: #e8e8ed; }
+    .category-tab.active { background: #0071e3; color: white; }
+    
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+    
+    .article-card {
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    
+    .article-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.1);
+    }
+    
+    .article-image {
+      height: 200px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+    }
+    
+    .article-content { padding: 28px; }
+    .article-content h3 { font-size: 22px; font-weight: 600; margin-bottom: 12px; color: #1d1d1f; line-height: 1.3; }
+    .article-content p { font-size: 15px; color: #86868b; line-height: 1.6; margin-bottom: 16px; }
+    .article-meta { font-size: 14px; color: #86868b; }
+    
+    .article-detail {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 17px;
+      color: #0071e3;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 40px;
+      transition: opacity 0.3s;
+    }
+    
+    .back-btn:hover { opacity: 0.7; }
+    
+    .article-detail h1 {
+      font-size: 56px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+    
+    .article-detail .article-meta {
+      font-size: 17px;
+      padding-bottom: 32px;
+      margin-bottom: 40px;
+      border-bottom: 1px solid #d2d2d7;
+    }
+    
+    .article-detail .content { font-size: 19px; line-height: 1.7; color: #1d1d1f; }
+    .article-detail .content p { margin-bottom: 24px; }
+    .article-detail .content h2 { font-size: 32px; font-weight: 600; margin: 56px 0 24px; color: #1d1d1f; }
+    .article-detail .content h3 { font-size: 24px; font-weight: 600; margin: 40px 0 16px; color: #1d1d1f; }
+    .article-detail .content ul { padding-left: 24px; margin-bottom: 24px; }
+    .article-detail .content li { margin-bottom: 12px; color: #1d1d1f; }
+    .article-detail .content blockquote {
+      background: linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%);
+      border-left: 4px solid #0071e3;
+      padding: 24px 28px;
+      margin: 32px 0;
+      border-radius: 0 16px 16px 0;
+      font-size: 19px;
+      font-style: italic;
+      color: #1d1d1f;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+    
+    .info-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    
+    .info-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.1);
+    }
+    
+    .info-card h3 { font-size: 28px; font-weight: 600; margin-bottom: 16px; color: #1d1d1f; }
+    .info-card p { font-size: 17px; color: #86868b; line-height: 1.7; margin-bottom: 12px; }
+    .info-card p strong { color: #1d1d1f; font-weight: 600; }
+    
+    .hero-image-section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+    
+    .hero-image {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 32px;
+      padding: 100px 60px;
+      text-align: center;
+      color: white;
+      transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    
+    .hero-image:hover {
+      transform: scale(1.02);
+      box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+    }
+    
+    .hero-image-icon { font-size: 120px; margin-bottom: 32px; }
+    .hero-image h2 { font-size: 48px; font-weight: 700; margin-bottom: 16px; }
+    .hero-image p { font-size: 24px; opacity: 0.9; }
+    
+    footer {
+      text-align: center;
+      padding: 60px 24px;
+      background: #f5f5f7;
+      border-top: 1px solid #d2d2d7;
+    }
+    
+    footer p { font-size: 13px; color: #86868b; }
+    
+    @media (max-width: 1024px) {
+      .hero h1 { font-size: 56px; }
+      .hero p { font-size: 24px; }
+      .hero-features { grid-template-columns: repeat(2, 1fr); }
+      .articles-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    
+    @media (max-width: 768px) {
+      nav { padding: 0 16px; }
+      .nav-links { gap: 20px; }
+      .nav-links a { font-size: 13px; }
+      .hero h1 { font-size: 40px; }
+      .hero p { font-size: 20px; }
+      .hero-features { grid-template-columns: 1fr; }
+      .page-title { font-size: 40px; padding: 80px 16px 40px; }
+      .articles-grid, .info-grid { grid-template-columns: 1fr; }
+      .article-detail h1, .hero-image h2 { font-size: 36px; }
+      .article-detail .content { font-size: 17px; }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .hero, .page-title, .feature-card, .article-card, .info-card {
+      animation: fadeIn 0.8s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <nav>
+      <div class="logo">
+        <span class="logo-icon">🍶</span>
+        <span>酱酒研学</span>
+      </div>
+      <div class="nav-links">
+        <router-link to="/">首页</router-link>
+        <router-link to="/knowledge">知识库</router-link>
+        <router-link to="/production">产区</router-link>
+        <router-link to="/wineries">酒厂</router-link>
+      </div>
+    </nav>
+    
+    <main><router-view></router-view></main>
+    
+    <footer>
+      <p>&copy; 2024 酱酒研学平台 · 探索千年酱香文化</p>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue
+    const { createRouter, createWebHashHistory } = VueRouter
+
+    const allArticles = [
+      { id: 'culture-1', title: '酱酒历史溯源：从远古到现代的千年传承', summary: '深入探索酱酒的起源与发展，从茅台镇的地理环境到现代酱酒产业的形成', icon: '📜', author: '酱酒文化研究中心', views: 12568, category: 'culture',
+        content: '<p>酱酒，作为中国白酒的瑰宝，拥有着悠久的历史和深厚的文化底蕴。</p><h2>历史沿革</h2><h3>远古时期</h3><p>早在秦汉时期，仁怀地区就已经开始酿酒。</p><h3>唐宋发展</h3><p>唐宋时期，仁怀地区的酿酒技术日趋成熟。</p><h3>明清繁荣</h3><p>明清时期，茅台镇的酿酒业达到了一个新的高峰。"回沙工艺"的出现，标志着酱酒酿造技术的成熟。</p><h3>1915年巴拿马金奖</h3><p>1915年，茅台酒在巴拿马万国博览会上获得金奖，从此走向世界。</p><blockquote>酱酒文化，承载着千年的智慧与匠心，正在新时代焕发出新的光彩！</blockquote>' },
+      { id: 'culture-2', title: '端午制曲：酱酒酿造的第一道神秘工序', summary: '详解端午制曲的文化内涵与工艺要点，探索微生物王国的奥秘', icon: '🌾', author: '酿酒大师工作室', views: 9876, category: 'culture',
+        content: '<p>端午制曲，是酱酒酿造的第一道工序，也是最为神秘的环节之一。</p><h2>为什么选择端午？</h2><p>端午时节，赤水河沿岸气温升高、湿度增大，正是微生物最活跃的时期。</p><h2>制曲工艺流程</h2><ul><li><strong>小麦粉碎：</strong>将小麦粉碎成"梅花瓣"形状</li><li><strong>踩曲：</strong>女工们在曲块上轻快地踩踏</li><li><strong>入仓发酵：</strong>将踩好的曲块放入</li><li><strong>翻仓：</strong>每隔一段时间，进行翻仓</li></ul><blockquote>踩曲女工们轻快的脚步，是茅台镇最动人的风景！</blockquote>' },
+      { id: 'culture-3', title: '重阳下沙：开启一年的酿酒之旅', summary: '重阳节为什么是酱酒投料的最佳时机？', icon: '🍂', author: '酱酒文化研究中心', views: 8765, category: 'culture',
+        content: '<p>重阳下沙，是酱酒酿造的正式开始。</p><h2>为什么选择重阳？</h2><ul><li>红缨子高粱成熟，颗粒饱满</li><li>雨季过后，赤水河变得清澈甘甜</li><li>秋高气爽，气温适中</li><li>重阳节是中国传统节日</li></ul><blockquote>下沙，不仅是一道工序，更是一种仪式，一种文化！</blockquote>' },
+      { id: 'culture-4', title: '赤水河：一条流淌着美酒的传奇河流', summary: '从云南到四川，赤水河孕育了中国最好的酱酒', icon: '🌊', author: '地理杂志社', views: 11234, category: 'culture',
+        content: '<p>赤水河，中国唯一一条没有被污染的长江支流。</p><h2>河流概况</h2><p>这条全长500多公里的河流，孕育了中国最好的酱酒。</p><blockquote>赤水河，一条流淌着美酒、流淌着文化、流淌着传奇的河流！</blockquote>' },
+      { id: 'culture-5', title: '红缨子高粱：酱酒的核心秘密', summary: '这种不起眼的小红高粱，为什么是酿造顶级酱酒的唯一选择？', icon: '🌾', author: '农业科技专家', views: 9456, category: 'culture',
+        content: '<p>红缨子高粱，是茅台镇特产的一种高粱。</p><h2>红缨子高粱的特点</h2><ul><li><strong>颗粒小：</strong>只有普通高粱的一半大小</li><li><strong>皮厚：</strong>角质层厚，耐蒸煮</li><li><strong>淀粉含量高：</strong>支链淀粉含量高达90%以上</li><li><strong>单宁适中：</strong>能产生独特风味</li></ul><blockquote>可以说，没有红缨子高粱，就没有顶级酱酒！</blockquote>' },
+      { id: 'culture-6', title: '陶坛储酒：时间的艺术，岁月的魔法', summary: '为什么酱酒要用陶坛储存？陶坛里发生了什么神奇的变化？', icon: '⏳', author: '储酒大师', views: 10567, category: 'culture',
+        content: '<p>酱酒酿造的最后一道工序——储存。</p><h2>为什么选择陶坛？</h2><ul><li><strong>透气性好：</strong>陶坛有微小的气孔，能让酒液"呼吸"</li><li><strong>矿物质丰富：</strong>含有多种对人体有益的矿物质</li><li><strong>化学稳定：</strong>化学性质稳定</li><li><strong>传统工艺：</strong>使用陶坛储酒是中国白酒的传统工艺</li></ul><blockquote>所以，喝酱酒，喝的不只是酒，还是时间！</blockquote>' },
+      { id: 'craft-1', title: '12987工艺详解：酱酒酿造的核心密码', summary: '一年生产周期、两次投料、九次蒸煮、八次发酵、七次取酒', icon: '📖', author: '国家级酿酒大师', views: 15678, category: 'craft',
+        content: '<p>12987工艺，是坤沙酱酒的核心工艺。</p><h2>12987的含义</h2><ul><li><strong>1：</strong>一年生产周期</li><li><strong>2：</strong>两次投料</li><li><strong>9：</strong>九次蒸煮</li><li><strong>8：</strong>八次发酵</li><li><strong>7：</strong>七次取酒</li></ul><blockquote>12987，酱酒的密码，匠心的体现！</blockquote>' },
+      { id: 'craft-2', title: '三高工艺：高温制曲、高温堆积、高温发酵', summary: '为什么酱酒要用"三高"工艺？', icon: '🔥', author: '酿酒技术专家', views: 12345, category: 'craft',
+        content: '<p>酱酒酿造有"三高"：高温制曲、高温堆积、高温发酵。</p><h2>高温制曲</h2><p>制曲的温度要达到60℃以上，是所有白酒中最高的。</p><h2>高温堆积</h2><p>加曲后的高粱要堆成圆锥体，进行堆积发酵。</p><blockquote>正是这些"高"，造就了酱酒的高品质！</blockquote>' },
+      { id: 'craft-3', title: '七轮次取酒：每一轮都有独特风味', summary: '七轮次酒各有什么特点？调酒师如何将它们完美组合？', icon: '🍷', author: '国家级调酒大师', views: 11234, category: 'craft',
+        content: '<p>酱酒要取七次酒，每一轮次的酒都有不同的风味特点。</p><ul><li><strong>一轮次：</strong>酱香味淡，有点生粮味</li><li><strong>二轮次：</strong>酱香味渐浓，有点甜</li><li><strong>三轮次：</strong>酱香突出，醇和微甜</li><li><strong>四轮次：</strong>酱香醇厚，回味悠长</li><li><strong>五轮次：</strong>酱香明显，焦糊香好</li><li><strong>六轮次：</strong>焦糊香明显，微苦</li><li><strong>七轮次：</strong>焦糊香重，苦味明显</li></ul><blockquote>调酒师将它们按比例组合，才能形成独特的酱酒风味！</blockquote>' },
+      { id: 'craft-4', title: '坤沙、碎沙、翻沙、窜沙：酱酒的分类', summary: '市场上的酱酒有哪些种类？它们有什么区别？', icon: '📊', author: '白酒鉴评专家', views: 14567, category: 'craft',
+        content: '<p>市场上的酱酒主要分为四种：坤沙、碎沙、翻沙、窜沙。</p><h2>坤沙酒</h2><p>用完整的红缨子高粱酿造，12987工艺，品质最好。</p><h2>碎沙酒</h2><p>用粉碎的高粱酿造，品质次之。</p><h2>翻沙酒</h2><p>用酒糟再酿，品质一般。</p><h2>窜沙酒</h2><p>品质最差。</p><blockquote>买酱酒，尽量买坤沙或碎沙！</blockquote>' },
+      { id: 'craft-5', title: '勾调艺术：酱酒的画龙点睛之笔', summary: '勾调不是"兑水"，而是艺术', icon: '🎨', author: '国家级调酒大师', views: 13456, category: 'craft',
+        content: '<p>勾调，是酱酒酿造的最后一道关键工序。</p><h2>什么是勾调？</h2><p>将不同轮次、不同年份、不同风格的基酒，按照一定比例混合在一起，使酒的风味达到最佳状态。</p><blockquote>好的勾调，能让酒的品质提升一个档次！</blockquote>' },
+      { id: 'craft-6', title: '石窖发酵：酱酒的摇篮', summary: '为什么酱酒要用石窖发酵？', icon: '🏛️', author: '发酵工程专家', views: 9876, category: 'craft',
+        content: '<p>酱酒发酵要用石窖。</p><h2>为什么要用石窖？</h2><ul><li>材质稳定</li><li>透气性好</li><li>保温性好</li><li>微生物环境</li></ul><blockquote>石窖，酱酒的摇篮，微生物的乐园！</blockquote>' },
+      { id: 'tasting-1', title: '酱酒品鉴入门：从视觉到味觉的感官之旅', summary: '详解观色、闻香、尝味、悟格四步品鉴法', icon: '👃', author: '国家级品酒师', views: 11456, category: 'tasting',
+        content: '<p>品鉴酱酒，是一场感官的盛宴。</p><h2>观色：视觉艺术</h2><p>举杯对光，看色泽，看挂杯。好的酱酒应该是微黄透明。</p><h2>闻香：嗅觉艺术</h2><p>初闻→细闻→空杯留香。好的酱酒酱香突出。</p><blockquote>品鉴酱酒，感受时间的味道！</blockquote>' },
+      { id: 'tasting-2', title: '酱酒收藏指南：什么样的酱酒值得收藏？', summary: '如何收藏酱酒？哪些酱酒有收藏价值？', icon: '🏆', author: '收藏协会专家', views: 12789, category: 'tasting',
+        content: '<p>酱酒收藏是一门学问。</p><h2>什么样的酒值得收藏？</h2><ul><li>名酒</li><li>稀缺品</li><li>年份酒</li><li>有特殊意义的酒</li></ul><h2>收藏注意事项</h2><p>温度：15-25℃，湿度：60-70%，避光，通风。</p><blockquote>收藏酱酒，就是收藏时光，收藏文化！</blockquote>' },
+      { id: 'tasting-3', title: '酱酒与美食的搭配艺术', summary: '酱酒适合搭配什么菜肴？', icon: '🍽️', author: '美食评论家', views: 10234, category: 'tasting',
+        content: '<p>美酒配美食，是人生一大乐事。</p><h2>经典搭配</h2><ul><li><strong>川菜：</strong>回锅肉、麻婆豆腐、水煮鱼</li><li><strong>湘菜：</strong>剁椒鱼头、毛氏红烧肉</li><li><strong>粤菜：</strong>白切鸡、烧鹅</li><li><strong>火锅：</strong>重庆火锅</li></ul><blockquote>美酒配美食，快乐似神仙！</blockquote>' }
+    ]
+
+    const Home = {
+      template: `<div>
+        <div class="hero">
+          <h1>探索酱酒文化</h1>
+          <p>传承千年酿造工艺，品味酱香独特魅力</p>
+        </div>
+        <div class="hero-features">
+          <div class="feature-card">
+            <div class="feature-icon">📚</div>
+            <h3>知识库</h3>
+            <p>探索酿造工艺与历史文化</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🗺️</div>
+            <h3>产区</h3>
+            <p>了解核心产区分布与特点</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🏭</div>
+            <h3>酒厂</h3>
+            <p>发现优质酱酒企业</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🍷</div>
+            <h3>品鉴</h3>
+            <p>学习专业品鉴技巧</p>
+          </div>
+        </div>
+        <div class="hero-image-section">
+          <router-link to="/knowledge" class="article-card">
+            <div class="hero-image">
+              <div class="hero-image-icon">🍶</div>
+              <h2>探索知识库</h2>
+              <p>15篇专业文章，深入了解酱酒文化</p>
+            </div>
+          </router-link>
+        </div>
+      </div>`
+    }
+
+    const Knowledge = {
+      template: `<div>
+        <h1 class="page-title">知识库</h1>
+        <div class="category-tabs">
+          <button v-for="cat in categories" :key="cat.id" @click="currentCategory = cat.id" :class="['category-tab', { active: currentCategory === cat.id }]">
+            {{ cat.name }} ({{ getArticleCount(cat.id) }})
+          </button>
+        </div>
+        <div class="articles-grid">
+          <router-link v-for="article in currentArticles" :key="article.id" :to="'/knowledge/' + article.id" class="article-card">
+            <div class="article-image">{{ article.icon }}</div>
+            <div class="article-content">
+              <h3>{{ article.title }}</h3>
+              <p>{{ article.summary }}</p>
+              <div class="article-meta">👤 {{ article.author }} · {{ formatViews(article.views) }}</div>
+            </div>
+          </router-link>
+        </div>
+      </div>`,
+      data() {
+        return { currentCategory: 'all', categories: [
+          { id: 'all', name: '全部' }, { id: 'culture', name: '酱酒文化' }, { id: 'craft', name: '酿造工艺' }, { id: 'tasting', name: '品鉴收藏' }
+        ] }
+      },
+      computed: {
+        currentArticles() {
+          if (this.currentCategory === 'all') return allArticles
+          return allArticles.filter(a => a.category === this.currentCategory)
+        }
+      },
+      methods: {
+        getArticleCount(catId) {
+          if (catId === 'all') return allArticles.length
+          return allArticles.filter(a => a.category === catId).length
+        },
+        formatViews(views) { return views >= 10000 ? (views/10000).toFixed(1)+'万' : views.toString() }
+      }
+    }
+
+    const KnowledgeDetail = {
+      template: `<div>
+        <div class="article-detail" v-if="article">
+          <button @click="$router.back()" class="back-btn">← 返回</button>
+          <h1>{{ article.icon }} {{ article.title }}</h1>
+          <div class="article-meta">👤 {{ article.author }} · {{ formatViews(article.views) }}</div>
+          <div class="content" v-html="article.content"></div>
+        </div>
+        <div v-else class="article-detail">
+          <button @click="$router.back()" class="back-btn">← 返回</button>
+          <h1 style="text-align:center; color:#86868b;">文章不存在</h1>
+        </div>
+      </div>`,
+      computed: {
+        article() { return allArticles.find(a => a.id === this.$route.params.id) },
+        formatViews() { return function(views) { return views >= 10000 ? (views/10000).toFixed(1)+'万' : views.toString() } }
+      }
+    }
+
+    const Production = {
+      template: `<div>
+        <h1 class="page-title">产区</h1>
+        <div class="hero-image-section">
+          <div class="hero-image">
+            <div class="hero-image-icon">🌊</div>
+            <h2>赤水河流域</h2>
+            <p>中国酱酒核心产区地图</p>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>📍 茅台镇核心产区</h3>
+            <p><strong>位置：</strong>贵州省遵义市仁怀市</p>
+            <p><strong>代表酒厂：</strong>茅台、国台、钓鱼台等</p>
+            <p><strong>特点：</strong>7.5平方公里核心产区，微生物环境独特</p>
+          </div>
+          <div class="info-card">
+            <h3>📍 赤水河中游产区</h3>
+            <p><strong>位置：</strong>贵州省遵义市习水县</p>
+            <p><strong>代表酒厂：</strong>习酒等</p>
+            <p><strong>特点：</strong>赤水河沿岸，水质优良</p>
+          </div>
+          <div class="info-card">
+            <h3>📍 古蔺产区</h3>
+            <p><strong>位置：</strong>四川省泸州市古蔺县</p>
+            <p><strong>代表酒厂：</strong>郎酒、仙潭等</p>
+            <p><strong>特点：</strong>酱酒第二大产区，气候适宜</p>
+          </div>
+          <div class="info-card">
+            <h3>📍 金沙产区</h3>
+            <p><strong>位置：</strong>贵州省毕节市金沙县</p>
+            <p><strong>代表酒厂：</strong>金沙窖酒等</p>
+            <p><strong>特点：</strong>贵州酱酒三大产区之一</p>
+          </div>
+        </div>
+      </div>`
+    }
+
+    const Wineries = {
+      template: `<div>
+        <h1 class="page-title">酒厂</h1>
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>🍶 贵州茅台酒厂</h3>
+            <p><strong>位置：</strong>贵州省遵义市仁怀市茅台镇</p>
+            <p><strong>品牌：</strong>茅台、飞天茅台、王子酒等</p>
+            <p><strong>特点：</strong>酱酒龙头企业，历史最悠久</p>
+          </div>
+          <div class="info-card">
+            <h3>🍶 习酒公司</h3>
+            <p><strong>位置：</strong>贵州省遵义市习水县习酒镇</p>
+            <p><strong>品牌：</strong>习酒、窖藏系列等</p>
+            <p><strong>特点：</strong>赤水河畔老牌名酒</p>
+          </div>
+          <div class="info-card">
+            <h3>🍶 郎酒集团</h3>
+            <p><strong>位置：</strong>四川省泸州市古蔺县二郎镇</p>
+            <p><strong>品牌：</strong>郎酒、红花郎、青花郎等</p>
+            <p><strong>特点：</strong>四川酱酒代表企业</p>
+          </div>
+          <div class="info-card">
+            <h3>🍶 国台酒业</h3>
+            <p><strong>位置：</strong>贵州省遵义市仁怀市茅台镇</p>
+            <p><strong>品牌：</strong>国台、国标等</p>
+            <p><strong>特点：</strong>茅台镇第二大酿酒企业</p>
+          </div>
+        </div>
+      </div>`
+    }
+
+    const routes = [
+      { path: '/', component: Home },
+      { path: '/knowledge', component: Knowledge },
+      { path: '/knowledge/:id', component: KnowledgeDetail },
+      { path: '/production', component: Production },
+      { path: '/wineries', component: Wineries }
+    ]
+
+    const router = createRouter({ history: createWebHashHistory(), routes })
+    const app = createApp({})
+    app.use(router)
+    app.mount('#app')
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import { Button as VanButton, Card as VanCard, Search as VanSearch, Tab as VanTab, Tabs as VanTabs, List as VanList, PullRefresh as VanPullRefresh, Cell as VanCell, CellGroup as VanCellGroup, Tag as VanTag, Image as VanImage, Swipe as VanSwipe, SwipeItem as VanSwipeItem, Grid as VanGrid, GridItem as VanGridItem } from 'vant'
+import 'vant/lib/index.css'
+import * as echarts from 'echarts'
+
+import App from './App.vue'
+import router from './router'
+import './styles/main.scss'
+
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(router)
+app.use(ElementPlus)
+
+// 注册Vant组件
+app.use(VanButton)
+app.use(VanCard)
+app.use(VanSearch)
+app.use(VanTab)
+app.use(VanTabs)
+app.use(VanList)
+app.use(VanPullRefresh)
+app.use(VanCell)
+app.use(VanCellGroup)
+app.use(VanTag)
+app.use(VanImage)
+app.use(VanSwipe)
+app.use(VanSwipeItem)
+app.use(VanGrid)
+app.use(VanGridItem)
+
+app.config.globalProperties.$echarts = echarts
+
+app.mount('#app')

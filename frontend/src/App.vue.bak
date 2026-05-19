@@ -1,0 +1,50 @@
+<template>
+  <div id="app" class="app-container">
+    <AppHeader />
+    <main class="main-content">
+      <router-view />
+    </main>
+    <AppFooter />
+    <MobileNav v-if="isMobile" />
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import AppHeader from '@/components/layout/AppHeader.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
+import MobileNav from '@/components/layout/MobileNav.vue'
+
+const isMobile = ref(false)
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+</script>
+
+<style lang="scss">
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: $bg-color;
+}
+
+.main-content {
+  flex: 1;
+  padding-bottom: 80px;
+  
+  @include respond-to(desktop) {
+    padding-bottom: 0;
+  }
+}
+</style>

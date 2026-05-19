@@ -1,0 +1,398 @@
+<template>
+  <div class="article-detail">
+    <button class="back-btn" @click="$router.back()">← 返回列表</button>
+    
+    <div v-if="loading" class="state-box">
+      <div class="state-icon">⏳</div>
+      <p>加载中...</p>
+    </div>
+    
+    <div v-else-if="error" class="state-box">
+      <div class="state-icon">⚠️</div>
+      <p class="error-text">{{ error }}</p>
+    </div>
+
+    <article v-else class="article-card">
+      <header class="article-header">
+        <span class="article-icon">{{ article.icon || '📖' }}</span>
+        <h1>{{ article.title }}</h1>
+        <div class="article-meta">
+          <span>{{ article.author }}</span>
+          <span class="dot">·</span>
+          <span>{{ formatViews(article.views) }} 阅读</span>
+        </div>
+      </header>
+      
+      <div class="article-body" v-html="renderedContent"></div>
+
+      <!-- 获客转化模块 -->
+      <div class="cta-section">
+        <div class="cta-divider"><span>📌 酱酒选购指南</span></div>
+        <div class="cta-products">
+          <div class="cta-product" v-for="p in products" :key="p.name">
+            <span class="cta-p-icon">{{ p.icon }}</span>
+            <div class="cta-p-info">
+              <strong>{{ p.name }}</strong>
+              <span>{{ p.desc }}</span>
+            </div>
+            <span class="cta-p-price">{{ p.price }}</span>
+          </div>
+        </div>
+        <div class="cta-contact">
+          <div class="cta-qr">
+            <span class="cta-qr-icon">💬</span>
+            <div>
+              <strong>想了解更多酱酒知识？</strong>
+              <p>扫码添加微信，获取专属选购建议</p>
+            </div>
+          </div>
+          <div class="cta-actions">
+            <button class="cta-btn cta-btn-primary" @click="showContact">📱 咨询酱酒选购</button>
+            <button class="cta-btn" @click="goProducts">🍶 查看产品</button>
+          </div>
+          <div v-if="contactVisible" class="cta-contact-info">
+            <p>微信号：<strong>bingge_jiangjiu</strong></p>
+            <p style="font-size:12px;color:#999">备注"酱酒知识库"优先通过</p>
+          </div>
+        </div>
+      </div>
+
+      <footer class="article-footer">
+        <p>* 本文内容综合自茅台官网、中国酒业协会、新华网等权威来源</p>
+      </footer>
+    </article>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { knowledgeApi } from '@/api'
+
+const route = useRoute()
+const loading = ref(true)
+const error = ref(null)
+const article = ref({ title: '加载中...', author: '', views: 0, content: '' })
+const contactVisible = ref(false)
+
+const products = ref([
+  { icon: '🍶', name: '君范·经典酱香', desc: '坤沙工艺 · 5年窖藏 · 53度', price: '¥298/瓶' },
+  { icon: '🏺', name: '君范·陈酿老酒', desc: '10年基酒 · 大师勾调 · 礼盒装', price: '¥688/瓶' },
+  { icon: '👑', name: '君范·珍藏版', desc: '15年老酒 · 限量发售 · 收藏级', price: '¥1688/瓶' }
+])
+
+const showContact = () => { contactVisible.value = !contactVisible.value }
+const goProducts = () => { window.location.href = '/wineries' }
+
+const parseMarkdown = (text) => {
+  if (!text || typeof text !== 'string') return ''
+  
+  let html = text
+    // Headers: ## → h3, ### → h4
+    .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // List items
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    // Tables (simple: convert rows with |)
+    .replace(/^\|(.+)\|$/gm, (match) => {
+      const cells = match.split('|').filter(c => c.trim())
+      if (cells.length >= 2) {
+        return '<div class="data-row"><span>' + cells.map(c => c.trim()).join('</span><span>') + '</span></div>'
+      }
+      return match
+    })
+    // Separators (---|---)
+    .replace(/^\|[-| ]+\|$/gm, '')
+    // Blockquotes
+    .replace(/^\* (.+)$/gm, '<blockquote>$1</blockquote>')
+    // Paragraphs (double newline)
+    .replace(/\n\n/g, '</p><p>')
+    // Single newlines
+    .replace(/\n/g, '<br>')
+  
+  // Wrap lists
+  html = html.replace(/(<li>.*?<\/li>)/gs, (match) => {
+    if (!match.includes('</ul>')) {
+      return '<ul>' + match + '</ul>'
+    }
+    return match
+  })
+  
+  // Clean up empty <p>s
+  html = html.replace(/<p><\/p>/g, '')
+  html = html.replace(/<p><br><\/p>/g, '')
+  
+  return '<p>' + html + '</p>'
+}
+
+const renderedContent = computed(() => {
+  return parseMarkdown(article.value.content)
+})
+
+const formatViews = (v) => v >= 10000 ? (v/10000).toFixed(1)+'万' : String(v||0)
+
+onMounted(async () => {
+  try {
+    const res = await knowledgeApi.getDetail(route.params.id)
+    if (res.code === 200 && res.data) {
+      article.value = res.data
+    } else {
+      article.value = { title: '文章不存在', author: '', views: 0, content: '抱歉，您访问的文章不存在。' }
+    }
+  } catch (e) {
+    error.value = '加载失败，请检查网络连接'
+  } finally {
+    loading.value = false
+  }
+})
+</script>
+
+<style scoped>
+.article-detail {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid #ddd;
+  padding: 8px 20px;
+  border-radius: 20px;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: all 0.2s;
+}
+.back-btn:hover {
+  border-color: #8B4513;
+  color: #8B4513;
+}
+
+.state-box {
+  text-align: center;
+  padding: 100px 0;
+  color: #999;
+}
+.state-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.error-text {
+  color: #e74c3c;
+}
+
+.article-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 48px 48px 40px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.article-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.article-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 16px;
+}
+.article-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.article-meta {
+  font-size: 14px;
+  color: #999;
+}
+.article-meta .dot {
+  margin: 0 8px;
+}
+
+.article-body {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #444;
+}
+
+.article-body :deep(h3) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #8B4513;
+  margin: 36px 0 12px;
+  padding-left: 12px;
+  border-left: 3px solid #D4AF37;
+}
+.article-body :deep(h4) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+  margin: 24px 0 8px;
+}
+.article-body :deep(p) {
+  margin: 0 0 12px;
+}
+.article-body :deep(strong) {
+  color: #333;
+  font-weight: 600;
+}
+.article-body :deep(em) {
+  color: #8B4513;
+  font-style: normal;
+}
+
+.article-body :deep(ul) {
+  padding: 0 0 0 20px;
+  margin: 8px 0 16px;
+}
+.article-body :deep(li) {
+  margin-bottom: 6px;
+  padding-left: 4px;
+  list-style: none;
+  position: relative;
+}
+.article-body :deep(li)::before {
+  content: '·';
+  position: absolute;
+  left: -16px;
+  color: #D4AF37;
+  font-weight: bold;
+}
+
+.article-body :deep(.data-row) {
+  display: flex;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 14px;
+}
+.article-body :deep(.data-row span) {
+  flex: 1;
+}
+.article-body :deep(.data-row:first-child) {
+  font-weight: 600;
+  color: #8B4513;
+  background: #faf8f5;
+  border-radius: 6px 6px 0 0;
+}
+
+.article-body :deep(blockquote) {
+  margin: 20px 0;
+  padding: 14px 20px;
+  background: #faf8f5;
+  border-left: 3px solid #D4AF37;
+  color: #8B4513;
+  font-size: 14px;
+  border-radius: 0 6px 6px 0;
+}
+
+.article-footer {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 12px;
+  color: #bbb;
+  text-align: center;
+}
+
+/* 获客转化模块 */
+.cta-section {
+  margin-top: 40px;
+  border-top: 2px dashed #D4AF37;
+  padding-top: 24px;
+}
+.cta-divider {
+  text-align: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+.cta-divider span {
+  background: #fff;
+  padding: 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #8B4513;
+}
+.cta-products {
+  background: linear-gradient(135deg, #faf8f5, #fef9e7);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.cta-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+}
+.cta-product:last-child { border-bottom: none; }
+.cta-p-icon { font-size: 28px; }
+.cta-p-info { flex: 1; }
+.cta-p-info strong { display: block; font-size: 14px; color: #333; margin-bottom: 2px; }
+.cta-p-info span { font-size: 12px; color: #999; }
+.cta-p-price { font-size: 15px; font-weight: 700; color: #e17055; white-space: nowrap; }
+
+.cta-contact {
+  background: linear-gradient(135deg, #8B4513, #A0522D);
+  border-radius: 10px;
+  padding: 18px;
+  color: #fff;
+}
+.cta-qr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.cta-qr-icon { font-size: 40px; }
+.cta-qr strong { font-size: 15px; display: block; margin-bottom: 2px; }
+.cta-qr p { font-size: 12px; opacity: .85; margin: 0; }
+
+.cta-actions {
+  display: flex;
+  gap: 10px;
+}
+.cta-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+.cta-btn:hover { background: rgba(255,255,255,.25); }
+.cta-btn-primary {
+  background: #D4AF37;
+  border-color: #D4AF37;
+  color: #333;
+}
+.cta-btn-primary:hover { background: #e6c14a; }
+
+.cta-contact-info {
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(255,255,255,.15);
+  border-radius: 8px;
+  text-align: center;
+}
+.cta-contact-info p { margin: 0; font-size: 14px; }
+.cta-contact-info strong { color: #D4AF37; }
+</style>
