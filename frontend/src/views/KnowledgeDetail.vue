@@ -17,49 +17,13 @@
         <span class="article-icon">{{ article.icon || '📖' }}</span>
         <h1>{{ article.title }}</h1>
         <div class="article-meta">
-          <span>{{ article.author }}</span>
-          <span class="dot">·</span>
           <span>{{ formatViews(article.views) }} 阅读</span>
         </div>
       </header>
       
       <div class="article-body" v-html="renderedContent"></div>
 
-      <!-- 获客转化模块 -->
-      <div class="cta-section">
-        <div class="cta-divider"><span>📌 酱酒选购指南</span></div>
-        <div class="cta-products">
-          <div class="cta-product" v-for="p in products" :key="p.name">
-            <span class="cta-p-icon">{{ p.icon }}</span>
-            <div class="cta-p-info">
-              <strong>{{ p.name }}</strong>
-              <span>{{ p.desc }}</span>
-            </div>
-            <span class="cta-p-price">{{ p.price }}</span>
-          </div>
-        </div>
-        <div class="cta-contact">
-          <div class="cta-qr">
-            <span class="cta-qr-icon">💬</span>
-            <div>
-              <strong>想了解更多酱酒知识？</strong>
-              <p>扫码添加微信，获取专属选购建议</p>
-            </div>
-          </div>
-          <div class="cta-actions">
-            <button class="cta-btn cta-btn-primary" @click="showContact">📱 咨询酱酒选购</button>
-            <button class="cta-btn" @click="goProducts">🍶 查看产品</button>
-          </div>
-          <div v-if="contactVisible" class="cta-contact-info">
-            <p>微信号：<strong>bingge_jiangjiu</strong></p>
-            <p style="font-size:12px;color:#999">备注"酱酒知识库"优先通过</p>
-          </div>
-        </div>
-      </div>
-
-      <footer class="article-footer">
-        <p>* 本文内容综合自茅台官网、中国酒业协会、新华网等权威来源</p>
-      </footer>
+      <footer class="article-footer"></footer>
     </article>
   </div>
 </template>
@@ -72,17 +36,10 @@ import { knowledgeApi } from '@/api'
 const route = useRoute()
 const loading = ref(true)
 const error = ref(null)
-const article = ref({ title: '加载中...', author: '', views: 0, content: '' })
+const article = ref({ title: '加载中...', views: 0, content: '' })
 const contactVisible = ref(false)
 
-const products = ref([
-  { icon: '🍶', name: '君范·经典酱香', desc: '坤沙工艺 · 5年窖藏 · 53度', price: '¥298/瓶' },
-  { icon: '🏺', name: '君范·陈酿老酒', desc: '10年基酒 · 大师勾调 · 礼盒装', price: '¥688/瓶' },
-  { icon: '👑', name: '君范·珍藏版', desc: '15年老酒 · 限量发售 · 收藏级', price: '¥1688/瓶' }
-])
-
-const showContact = () => { contactVisible.value = !contactVisible.value }
-const goProducts = () => { window.location.href = '/wineries' }
+const formatViews = (v) => v >= 10000 ? (v/10000).toFixed(1)+'万' : String(v||0)
 
 const parseMarkdown = (text) => {
   if (!text || typeof text !== 'string') return ''
@@ -132,8 +89,6 @@ const parseMarkdown = (text) => {
 const renderedContent = computed(() => {
   return parseMarkdown(article.value.content)
 })
-
-const formatViews = (v) => v >= 10000 ? (v/10000).toFixed(1)+'万' : String(v||0)
 
 onMounted(async () => {
   try {
