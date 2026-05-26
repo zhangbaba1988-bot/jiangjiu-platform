@@ -12,6 +12,8 @@
           <router-link to="/production" @click="menuOpen=false">产区</router-link>
           <router-link to="/wineries" @click="menuOpen=false">酒厂</router-link>
           <router-link to="/news" @click="menuOpen=false">资讯</router-link>
+          <router-link to="/forum" @click="menuOpen=false">论坛</router-link>
+          <router-link to="/contact" @click="menuOpen=false">联系我们</router-link>
           <router-link to="/profile" @click="menuOpen=false">我的</router-link>
         </nav>
       </div>

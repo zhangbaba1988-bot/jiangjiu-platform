@@ -1,29 +1,28 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 from datetime import datetime
 import json
+import os
+import uuid
 
-from app.database import get_db, get_redis, mongodb_connected, redis_connected
+from app.database import get_db, mongodb_connected, redis_connected
 
-# 创建FastAPI应用
 app = FastAPI(
     title="酱酒研学平台API",
     description="酱酒研学平台后端API接口",
     version="1.0.0"
 )
 
-# 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 开发环境允许所有来源
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 内存数据存储（当MongoDB不可用时使用）
 memory_data = {
     "knowledge": [],
     "production": [],
@@ -31,95 +30,209 @@ memory_data = {
     "news": []
 }
 
-# 如果MongoDB不可用，从JSON文件加载模拟数据
 if not mongodb_connected:
-    import os
     data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
     for name in memory_data:
         json_path = os.path.join(data_dir, f"{name}.json")
         if os.path.exists(json_path):
             with open(json_path, "r", encoding="utf-8") as f:
                 memory_data[name] = json.load(f)
-            print(f"✓ 从 {json_path} 加载了 {len(memory_data[name])} 条 {name} 数据")
 
 
-def get_collection(name):
-    """获取集合，优先使用MongoDB，否则使用内存存储"""
-    if mongodb_connected and get_db() is not None:
-        return get_db()[name]
-    return None
+# 会员与收藏数据
+sample_favorites = [
+    {
+        "id": "klg_001",
+        "title": "酱酒历史溯源：从远古到现代的千年传承",
+        "summary": "深入探索酱酒的起源与发展，从汉武帝枸酱酒到巴拿马金奖的传奇故事",
+        "category": "culture",
+        "icon": "📜"
+    },
+    {
+        "id": "news_001",
+        "title": "茅台集团2025年营收突破1800亿元",
+        "summary": "茅台集团公布2025年度业绩报告，全年营收突破1800亿元，同比增长12%。",
+        "type": "company",
+        "source": "茅台集团",
+        "icon": "📈"
+    },
+    {
+        "id": "prd_001",
+        "name": "茅台镇核心产区",
+        "description": "中国酱酒的心脏，全球市值最高酒企所在地",
+        "region": "贵州省仁怀市",
+        "icon": "🏛️"
+    }
+]
+
+sample_history = [
+    {
+        "id": "wry_001",
+        "name": "贵州茅台酒厂",
+        "production": "茅台镇核心产区",
+        "brand": "贵州茅台",
+        "description": "中国酱酒标杆，全球市值最高酒企。飞天茅台年销千亿。",
+        "icon": "👑"
+    },
+    {
+        "id": "klg_005",
+        "title": "茅台镇：不可复制的微生物王国",
+        "summary": "茅台核心产区已发现1946种微生物，两株全新菌种被命名为'石窖梭菌'和'茅台梭菌'",
+        "category": "culture",
+        "icon": "🔬"
+    },
+    {
+        "id": "news_002",
+        "title": "酱酒新国标正式实施 行业洗牌加速",
+        "summary": "酱香型白酒国家标准修订版正式实施，对工艺标准、原料要求等做出更严格规定。",
+        "type": "policy",
+        "source": "市场监管总局",
+        "icon": "📋"
+    }
+]
+
+user_state = {
+    "profile": {
+        "id": "user_001",
+        "nickname": "酱酒爱好者",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=jiangjiu",
+        "favorite_count": len(sample_favorites),
+        "history_count": len(sample_history)
+    },
+    "favorites": [json.loads(json.dumps(item)) for item in sample_favorites],
+    "history": [json.loads(json.dumps(item)) for item in sample_history],
+    "members": [
+        {
+            "id": "user_001",
+            "nickname": "酱酒爱好者",
+            "email": "user001@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=jiangjiu",
+            "status": "active",
+            "register_time": "2026-01-10T08:00:00",
+            "last_login": "2026-05-25T20:00:00",
+            "favorite_count": len(sample_favorites),
+            "history_count": len(sample_history)
+        },
+        {
+            "id": "user_002",
+            "nickname": "品鉴达人",
+            "email": "user002@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=jiangjiu2",
+            "status": "active",
+            "register_time": "2026-02-12T09:00:00",
+            "last_login": "2026-05-24T17:30:00",
+            "favorite_count": 5,
+            "history_count": 12
+        },
+        {
+            "id": "user_003",
+            "nickname": "老酒收藏者",
+            "email": "user003@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=jiangjiu3",
+            "status": "inactive",
+            "register_time": "2026-03-20T11:20:00",
+            "last_login": "2026-05-20T12:55:00",
+            "favorite_count": 8,
+            "history_count": 9
+        }
+    ]
+}
+
+admin_credentials = {
+    "superadmin": "Jiangjiu@2026"
+}
+admin_tokens = set()
 
 
-def find_documents(collection_name, query=None, limit=100, skip=0):
-    """查询文档"""
-    if query is None:
-        query = {}
-    
-    collection = get_collection(collection_name)
-    if collection is not None:
-        cursor = collection.find(query).skip(skip).limit(limit)
-        # 转换ObjectId为字符串
-        result = []
-        for doc in cursor:
-            doc['_id'] = str(doc['_id'])
-            result.append(doc)
-        return result
-    else:
-        # 内存模式
-        data = memory_data[collection_name]
-        if query:
-            # 简单过滤
-            filtered = []
-            for item in data:
-                match = True
-                for k, v in query.items():
-                    if isinstance(v, dict) and '$regex' in v:
-                        import re
-                        pattern = re.compile(v['$regex'], re.IGNORECASE)
-                        if not pattern.search(str(item.get(k, ''))):
-                            match = False
-                            break
-                    elif item.get(k) != v:
-                        match = False
-                        break
-                if match:
-                    filtered.append(item)
-            return filtered[skip:skip+limit]
-        return data[skip:skip+limit]
-
-
-def count_documents(collection_name, query=None):
-    """统计文档数量"""
-    if query is None:
-        query = {}
-    
-    collection = get_collection(collection_name)
-    if collection is not None:
-        return collection.count_documents(query)
-    else:
-        # 内存模式：直接统计匹配的文档数
-        items = memory_data.get(collection_name, [])
-        if not query or query == {}:
-            return len(items)
-        return sum(1 for item in items if all(item.get(k) == v for k, v in query.items()))
-
-
-def find_one(collection_name, query):
-    """查询单个文档"""
-    results = find_documents(collection_name, query, limit=1)
-    return results[0] if results else None
-
-
-# 响应模型
 class ApiResponse(BaseModel):
     code: int = 200
     message: str = "success"
     data: Any = None
 
 
+def get_collection(name):
+    if mongodb_connected:
+        db = get_db()
+        if db is not None:
+            return db[name]
+    return None
+
+
+def find_documents(collection_name, query=None, limit=100, skip=0):
+    if query is None:
+        query = {}
+
+    collection = get_collection(collection_name)
+    if collection is not None:
+        cursor = collection.find(query).skip(skip).limit(limit)
+        result = []
+        for doc in cursor:
+            doc['_id'] = str(doc['_id'])
+            result.append(doc)
+        return result
+
+    data = memory_data[collection_name]
+    if query:
+        filtered = []
+        for item in data:
+            match = True
+            for k, v in query.items():
+                if isinstance(v, dict) and '$regex' in v:
+                    import re
+                    pattern = re.compile(v['$regex'], re.IGNORECASE)
+                    if not pattern.search(str(item.get(k, ''))):
+                        match = False
+                        break
+                elif item.get(k) != v:
+                    match = False
+                    break
+            if match:
+                filtered.append(item)
+        return filtered[skip:skip+limit]
+
+    return data[skip:skip+limit]
+
+
+def count_documents(collection_name, query=None):
+    if query is None:
+        query = {}
+
+    collection = get_collection(collection_name)
+    if collection is not None:
+        return collection.count_documents(query)
+
+    items = memory_data.get(collection_name, [])
+    if not query or query == {}:
+        return len(items)
+
+    return sum(1 for item in items if all(item.get(k) == v for k, v in query.items()))
+
+
+def find_one(collection_name, query):
+    results = find_documents(collection_name, query, limit=1)
+    return results[0] if results else None
+
+
+def sync_user_counts():
+    user_state["profile"]["favorite_count"] = len(user_state["favorites"])
+    user_state["profile"]["history_count"] = len(user_state["history"])
+
+    for member in user_state["members"]:
+        if member["id"] == user_state["profile"]["id"]:
+            member["favorite_count"] = len(user_state["favorites"])
+            member["history_count"] = len(user_state["history"])
+
+
+def parse_bearer_token(authorization: Optional[str]):
+    if not authorization:
+        return None
+    if not authorization.startswith("Bearer "):
+        return None
+    return authorization.replace("Bearer ", "", 1)
+
+
 @app.get("/")
 async def root():
-    """根路径"""
     return ApiResponse(data={
         "service": "酱酒研学平台API",
         "version": "1.0.0",
@@ -130,7 +243,6 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """健康检查"""
     return ApiResponse(data={
         "status": "healthy",
         "timestamp": datetime.now().isoformat()
@@ -139,18 +251,15 @@ async def health_check():
 
 @app.get("/dashboard")
 async def get_dashboard():
-    """首页数据看板"""
     try:
         knowledge_count = count_documents("knowledge")
         production_count = count_documents("production")
         wineries_count = count_documents("wineries")
         news_count = count_documents("news")
-        
-        # 获取最新资讯
+
         latest_news = find_documents("news", limit=5)
-        # 获取热门酒厂
         hot_wineries = find_documents("wineries", limit=6)
-        
+
         return ApiResponse(data={
             "statistics": {
                 "knowledge_count": knowledge_count,
@@ -171,16 +280,15 @@ async def get_knowledge_list(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000)
 ):
-    """获取知识库列表"""
     try:
         query = {}
         if category:
             query["category"] = category
-        
+
         skip = (page - 1) * page_size
         total = count_documents("knowledge", query)
         items = find_documents("knowledge", query, limit=page_size, skip=skip)
-        
+
         return ApiResponse(data={
             "list": items,
             "total": total,
@@ -193,24 +301,21 @@ async def get_knowledge_list(
 
 @app.get("/knowledge/categories")
 async def get_knowledge_categories():
-    """获取知识库分类"""
     categories = [
         {"id": "culture", "name": "酱酒文化", "count": 0},
         {"id": "craft", "name": "酿造工艺", "count": 0},
         {"id": "tasting", "name": "品鉴指南", "count": 0},
         {"id": "production", "name": "产区介绍", "count": 0}
     ]
-    
-    # 统计各类别数量
+
     for cat in categories:
         cat["count"] = count_documents("knowledge", {"category": cat["id"]})
-    
+
     return ApiResponse(data=categories)
 
 
 @app.get("/knowledge/{item_id}")
 async def get_knowledge_detail(item_id: str):
-    """获取知识库详情"""
     item = find_one("knowledge", {"id": item_id})
     if not item:
         raise HTTPException(status_code=404, detail="文章不存在")
@@ -222,12 +327,11 @@ async def get_production_list(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000)
 ):
-    """获取产区列表"""
     try:
         skip = (page - 1) * page_size
         total = count_documents("production")
         items = find_documents("production", limit=page_size, skip=skip)
-        
+
         return ApiResponse(data={
             "list": items,
             "total": total,
@@ -240,13 +344,12 @@ async def get_production_list(
 
 @app.get("/production/statistics")
 async def get_production_statistics():
-    """获取产区统计数据"""
     productions = find_documents("production", limit=100)
-    
+
     total_output = sum(p.get("output", 0) for p in productions)
     total_value = sum(p.get("output_value", 0) for p in productions)
     total_wineries = sum(p.get("winery_count", 0) for p in productions)
-    
+
     return ApiResponse(data={
         "total_output": total_output,
         "total_value": total_value,
@@ -257,7 +360,6 @@ async def get_production_statistics():
 
 @app.get("/production/{item_id}")
 async def get_production_detail(item_id: str):
-    """获取产区详情"""
     item = find_one("production", {"id": item_id})
     if not item:
         raise HTTPException(status_code=404, detail="产区不存在")
@@ -270,16 +372,15 @@ async def get_wineries_list(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000)
 ):
-    """获取酒厂名录"""
     try:
         query = {}
         if production:
             query["production"] = production
-        
+
         skip = (page - 1) * page_size
         total = count_documents("wineries", query)
         items = find_documents("wineries", query, limit=page_size, skip=skip)
-        
+
         return ApiResponse(data={
             "list": items,
             "total": total,
@@ -292,7 +393,6 @@ async def get_wineries_list(
 
 @app.get("/wineries/{item_id}")
 async def get_winery_detail(item_id: str):
-    """获取酒厂详情"""
     item = find_one("wineries", {"id": item_id})
     if not item:
         raise HTTPException(status_code=404, detail="酒厂不存在")
@@ -305,16 +405,15 @@ async def get_news_list(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000)
 ):
-    """获取资讯列表"""
     try:
         query = {}
         if type:
             query["type"] = type
-        
+
         skip = (page - 1) * page_size
         total = count_documents("news", query)
         items = find_documents("news", query, limit=page_size, skip=skip)
-        
+
         return ApiResponse(data={
             "list": items,
             "total": total,
@@ -327,7 +426,6 @@ async def get_news_list(
 
 @app.get("/news/{item_id}")
 async def get_news_detail(item_id: str):
-    """获取资讯详情"""
     item = find_one("news", {"id": item_id})
     if not item:
         raise HTTPException(status_code=404, detail="资讯不存在")
@@ -336,22 +434,14 @@ async def get_news_detail(item_id: str):
 
 @app.get("/search")
 async def search(keyword: str = Query(..., min_length=1)):
-    """全站搜索"""
     try:
         query = {"$regex": keyword, "$options": "i"}
-        
-        # 搜索知识库
+
         knowledge_results = find_documents("knowledge", {"title": query}, limit=10)
-        
-        # 搜索酒厂
         wineries_results = find_documents("wineries", {"name": query}, limit=10)
-        
-        # 搜索产区
         production_results = find_documents("production", {"name": query}, limit=10)
-        
-        # 搜索资讯
         news_results = find_documents("news", {"title": query}, limit=10)
-        
+
         return ApiResponse(data={
             "keyword": keyword,
             "knowledge": knowledge_results,
@@ -366,7 +456,6 @@ async def search(keyword: str = Query(..., min_length=1)):
 
 @app.get("/search/hot")
 async def get_hot_searches():
-    """获取热门搜索"""
     hot_searches = [
         {"keyword": "坤沙工艺", "count": 1256},
         {"keyword": "茅台镇", "count": 1089},
@@ -382,39 +471,100 @@ async def get_hot_searches():
 
 @app.get("/user/profile")
 async def get_user_profile():
-    """获取用户信息（模拟）"""
-    return ApiResponse(data={
-        "id": "user_001",
-        "nickname": "酱酒爱好者",
-        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=jiangjiu",
-        "favorite_count": 12,
-        "history_count": 36
-    })
+    sync_user_counts()
+    return ApiResponse(data=user_state["profile"])
+
+
+@app.put("/user/profile")
+async def update_user_profile(data: Dict[str, Any]):
+    nickname = data.get("nickname")
+    avatar = data.get("avatar")
+
+    if nickname:
+        user_state["profile"]["nickname"] = nickname
+    if avatar:
+        user_state["profile"]["avatar"] = avatar
+
+    for member in user_state["members"]:
+        if member["id"] == user_state["profile"]["id"]:
+            if nickname:
+                member["nickname"] = nickname
+            if avatar:
+                member["avatar"] = avatar
+
+    sync_user_counts()
+    return ApiResponse(data=user_state["profile"])
 
 
 @app.get("/user/favorites")
 async def get_user_favorites():
-    """获取收藏列表（模拟）"""
-    # 返回空列表，模拟用户暂无收藏
-    return ApiResponse(data={"list": [], "total": 0})
+    sync_user_counts()
+    return ApiResponse(data={
+        "list": user_state["favorites"],
+        "total": len(user_state["favorites"])
+    })
 
 
 @app.post("/user/favorites")
 async def add_favorite(data: Dict[str, Any]):
-    """添加收藏（模拟）"""
+    item_id = data.get("id")
+    if not item_id:
+        raise HTTPException(status_code=400, detail="缺少收藏项目 id")
+
+    exists = any(item.get("id") == item_id for item in user_state["favorites"])
+    if not exists:
+        user_state["favorites"].append(json.loads(json.dumps(data)))
+        sync_user_counts()
+
     return ApiResponse(data={"success": True, "message": "收藏成功"})
 
 
 @app.delete("/user/favorites/{item_id}")
 async def remove_favorite(item_id: str):
-    """取消收藏（模拟）"""
+    before = len(user_state["favorites"])
+    user_state["favorites"] = [item for item in user_state["favorites"] if item.get("id") != item_id]
+    if len(user_state["favorites"]) == before:
+        raise HTTPException(status_code=404, detail="收藏不存在")
+
+    sync_user_counts()
     return ApiResponse(data={"success": True, "message": "取消收藏成功"})
 
 
 @app.get("/user/history")
 async def get_user_history():
-    """获取浏览历史（模拟）"""
-    return ApiResponse(data={"list": [], "total": 0})
+    sync_user_counts()
+    return ApiResponse(data={
+        "list": user_state["history"],
+        "total": len(user_state["history"])
+    })
+
+
+@app.post("/admin/login")
+async def admin_login(data: Dict[str, Any]):
+    username = data.get("username")
+    password = data.get("password")
+
+    if admin_credentials.get(username) != password:
+        raise HTTPException(status_code=401, detail="管理员账号或密码错误")
+
+    token = f"admin-{uuid.uuid4().hex}"
+    admin_tokens.add(token)
+    return ApiResponse(data={
+        "token": token,
+        "username": username
+    })
+
+
+@app.get("/admin/members")
+async def get_admin_members(authorization: Optional[str] = Header(None)):
+    token = parse_bearer_token(authorization)
+    if token not in admin_tokens:
+        raise HTTPException(status_code=401, detail="未登录或登录已过期")
+
+    return ApiResponse(data={
+        "members": user_state["members"],
+        "total": len(user_state["members"])
+    })
 
 
 if __name__ == "__main__":

@@ -25,6 +25,48 @@
 
       <footer class="article-footer"></footer>
     </article>
+
+    <!-- ========== 获客转化模块 ========== -->
+    <div class="cta-section">
+      <div class="cta-divider"><span>🍶 想要品鉴正宗酱酒？</span></div>
+      
+      <div class="cta-products">
+        <div class="cta-product">
+          <span class="cta-p-icon">🛢️</span>
+          <div class="cta-p-info"><strong>君范·雅藏 y5</strong><span>5年坤沙 · 入门首选</span></div>
+          <span class="cta-p-price">¥198/桶</span>
+        </div>
+        <div class="cta-product">
+          <span class="cta-p-icon">🏺</span>
+          <div class="cta-p-info"><strong>君范·典藏 y10</strong><span>10年坤沙 · 酒友钟爱</span></div>
+          <span class="cta-p-price">¥398/桶</span>
+        </div>
+        <div class="cta-product">
+          <span class="cta-p-icon">👑</span>
+          <div class="cta-p-info"><strong>君范·臻藏 y14</strong><span>14年坤沙 · 品鉴级</span></div>
+          <span class="cta-p-price">¥698/桶</span>
+        </div>
+      </div>
+
+      <div class="cta-contact">
+        <div class="cta-qr">
+          <img src="/qr-wechat.png" alt="微信二维码" class="cta-qr-img" />
+          <div>
+            <strong>👤 兵哥微信号：bingge_jiangjiu</strong>
+            <p>加微信备注"知识库"，秒通过</p>
+          </div>
+        </div>
+        <div class="cta-actions">
+          <button class="cta-btn" @click="copyWechat">📋 复制微信号</button>
+          <button class="cta-btn cta-btn-primary" @click="contactVisible = true">💬 立即咨询</button>
+        </div>
+        <div v-if="contactVisible" class="cta-contact-info">
+          <p>📱 微信搜索：<strong>bingge_jiangjiu</strong></p>
+          <p>📝 备注：<strong>知识库</strong></p>
+          <p style="margin-top:6px;font-size:12px;opacity:.7">或扫描左侧二维码直接添加</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -38,6 +80,14 @@ const loading = ref(true)
 const error = ref(null)
 const article = ref({ title: '加载中...', views: 0, content: '' })
 const contactVisible = ref(false)
+
+const copyWechat = () => {
+  navigator.clipboard.writeText('bingge_jiangjiu').then(() => {
+    alert('微信号已复制！打开微信搜索添加')
+  }).catch(() => {
+    alert('微信号：bingge_jiangjiu')
+  })
+}
 
 const formatViews = (v) => v >= 10000 ? (v/10000).toFixed(1)+'万' : String(v||0)
 
@@ -348,6 +398,13 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   margin-bottom: 14px;
+}
+.cta-qr-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 6px;
+  border: 2px solid rgba(255,255,255,.3);
+  flex-shrink: 0;
 }
 .cta-qr-icon { font-size: 40px; }
 .cta-qr strong { font-size: 15px; display: block; margin-bottom: 2px; }

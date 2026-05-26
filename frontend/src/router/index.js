@@ -56,10 +56,28 @@ const routes = [
     meta: { title: '资讯详情' }
   },
   {
+    path: '/contact',
+    name: 'Contact',
+    component: () => import('@/views/Contact.vue'),
+    meta: { title: '联系我们' }
+  },
+  {
+    path: '/forum',
+    name: 'Forum',
+    component: () => import('@/views/Forum.vue'),
+    meta: { title: '论坛板块' }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('@/views/Profile.vue'),
     meta: { title: '个人中心' }
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('@/views/Admin.vue'),
+    meta: { title: '超级管理员后台' }
   },
   {
     path: '/search',
@@ -70,7 +88,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL || '/'),
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
