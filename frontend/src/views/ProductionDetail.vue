@@ -21,7 +21,7 @@
           </div>
           <div class="overview-item">
             <div class="label">年产量</div>
-            <div class="value">{{ production.output || 0 }} 千升</div>
+            <div class="value">{{ production.output ? (production.output/1000).toFixed(1) : 0 }} 万吨</div>
           </div>
           <div class="overview-item">
             <div class="label">年产值</div>
@@ -148,7 +148,7 @@ const initChart = () => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: ['2020', '2021', '2022', '2023', '2024']
+      data: ['2019', '2020', '2021', '2022', '2023', '2024', '2025']
     },
     yAxis: {
       type: 'value'
@@ -158,7 +158,7 @@ const initChart = () => {
         name: '产量(千升)',
         type: 'line',
         stack: 'Total',
-        data: [120, 190, 250, 320, 400],
+        data: [150, 180, 220, 260, 320, 350, 380],
         smooth: true,
         itemStyle: {
           color: '#409eff'
@@ -168,7 +168,7 @@ const initChart = () => {
         name: '产值(亿元)',
         type: 'line',
         stack: 'Total',
-        data: [80, 140, 200, 280, 360],
+        data: [80, 100, 140, 180, 230, 280, 320],
         smooth: true,
         itemStyle: {
           color: '#67c23a'

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6B3A2A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6B3A2Add;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="95" fill="url(#bg)" />
+  <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+  <circle cx="100" cy="100" r="78" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+  <text x="100" y="106" text-anchor="middle" dominant-baseline="central"
+        font-family="STHeiti, SimHei, sans-serif" font-size="44" font-weight="bold"
+        fill="white" letter-spacing="6">怀庄</text>
+  <line x1="50" y1="140" x2="150" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" />
+  <line x1="65" y1="146" x2="135" y2="146" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+</svg>

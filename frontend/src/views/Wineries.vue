@@ -22,7 +22,7 @@
           <span class="stat-label">覆盖产区</span>
         </div>
         <div class="stat-item">
-          <span class="stat-val">{{ formatNum(totalOutput) }}万吨</span>
+          <span class="stat-val">{{ totalOutput > 0 ? formatNum(totalOutput) + '万吨' : '—' }}</span>
           <span class="stat-label">总年产能</span>
         </div>
         <div class="stat-item">
@@ -39,16 +39,22 @@
 
       <!-- 产区筛选 -->
       <div class="filter-bar">
-        <button v-for="r in regions" :key="r" @click="currentRegion = r"
+        <button v-for="r in regions" :key="r" @click="currentRegion = r; goPage(1)"
           :class="['filter-btn', { active: currentRegion === r }]">
           {{ r }} ({{ countByRegion(r) }})
         </button>
       </div>
 
+      <!-- 分页信息 -->
+      <div class="page-info">
+        <span>共 {{ filteredWineries.length }} 家酒厂，每页 {{ pageSize }} 家</span>
+      </div>
+
       <!-- 酒厂列表 -->
       <div class="winery-list">
-        <router-link v-for="w in filteredWineries" :key="w.id" :to="'/wineries/' + w.id" class="winery-row">
-          <span class="w-icon">{{ w.icon || '🏭' }}</span>
+        <router-link v-for="w in pagedWineries" :key="w.id" :to="'/wineries/' + w.id" class="winery-row">
+          <img v-if="isImageIcon(w.icon)" :src="baseUrl + w.icon" class="w-icon-img" alt="" />
+          <span v-else class="w-icon">{{ w.icon || '🏭' }}</span>
           <div class="w-body">
             <div class="w-top">
               <span class="w-name">{{ w.name }}</span>
@@ -62,12 +68,23 @@
           <span class="w-arrow">›</span>
         </router-link>
       </div>
+
+      <!-- 分页器 -->
+      <div class="pagination-bar" v-if="totalPages > 1">
+        <button class="page-btn" :disabled="currentPage <= 1" @click="goPage(currentPage - 1)">‹ 上一页</button>
+        <button v-for="p in visiblePages" :key="p" :class="['page-btn', { active: p === currentPage }]" @click="goPage(p)">
+          {{ p }}
+        </button>
+        <button class="page-btn" :disabled="currentPage >= totalPages" @click="goPage(currentPage + 1)">下一页 ›</button>
+      </div>
     </template>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+
+const baseUrl = import.meta.env.BASE_URL
 import { wineryApi } from '@/api'
 
 const loading = ref(true)
@@ -80,6 +97,9 @@ const regions = computed(() => {
   const set = new Set(allWineries.value.map(w => w.production))
   return ['全部', ...Array.from(set)]
 })
+
+const pageSize = 50
+const currentPage = ref(1)
 
 const filteredWineries = computed(() => {
   let list = allWineries.value
@@ -98,6 +118,29 @@ const filteredWineries = computed(() => {
   return list
 })
 
+const totalPages = computed(() => Math.ceil(filteredWineries.value.length / pageSize))
+
+const pagedWineries = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredWineries.value.slice(start, start + pageSize)
+})
+
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const cur = currentPage.value
+  if (total <= 7) return Array.from({length: total}, (_, i) => i + 1)
+  if (cur <= 4) return [1,2,3,4,5, '...', total]
+  if (cur >= total - 3) return [1, '...', total-4, total-3, total-2, total-1, total]
+  return [1, '...', cur-1, cur, cur+1, '...', total]
+})
+
+const goPage = (p) => {
+  if (typeof p === 'number' && p >= 1 && p <= totalPages.value) {
+    currentPage.value = p
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
 const countByRegion = (r) => {
   if (r === '全部') return allWineries.value.length
   return allWineries.value.filter(w => w.production === r).length
@@ -109,7 +152,11 @@ const oldestYear = computed(() => {
   return Math.min(...years)
 })
 const formatNum = (n) => (n/10000).toFixed(1)
+// 判断icon是否为图片路径
+const isImageIcon = (icon) => icon && (icon.startsWith('/') || icon.startsWith('http'))
+
 const formatOutput = (n) => {
+  if (n === null || n === undefined || n === 0) return '数据不详'
   if (n >= 10000) return (n/10000).toFixed(1) + '万吨'
   return (n/1000).toFixed(0) + '千吨'
 }
@@ -205,7 +252,18 @@ onMounted(fetchData)
 .w-icon {
   font-size: 28px;
   width: 40px;
+  height: 40px;
   text-align: center;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.w-icon-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 .w-body {
@@ -249,5 +307,51 @@ onMounted(fetchData)
   font-size: 18px;
   color: #ccc;
   flex-shrink: 0;
+}
+
+/* 分页信息 */
+.page-info {
+  text-align: right;
+  margin: 12px 0 8px;
+  font-size: 13px;
+  color: #999;
+}
+
+/* 分页器 */
+.pagination-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin: 24px 0 40px;
+  flex-wrap: wrap;
+}
+.page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.page-btn:hover:not(:disabled) {
+  border-color: #8B4513;
+  color: #8B4513;
+}
+.page-btn.active {
+  background: #8B4513;
+  color: #fff;
+  border-color: #8B4513;
+}
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>

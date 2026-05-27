@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0E6655;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0E6655dd;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="95" fill="url(#bg)" />
+  <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+  <text x="100" y="106" text-anchor="middle" dominant-baseline="central"
+        font-family="STHeiti, SimHei, sans-serif" font-size="44" font-weight="bold"
+        fill="white" letter-spacing="4">茅合</text>
+</svg>
