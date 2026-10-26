@@ -7,8 +7,12 @@ import sys
 from datetime import datetime
 
 # WCRSS API 配置
+# 注意：正确端点是 /sapi/articles（带 recentDays/num 参数），旧代码用的
+# /api/v1/articles 会 403；且 urllib 默认 UA 会被 WAF 拦成 403，必须伪装浏览器 UA。
 API_KEY = os.environ.get('WCRSS_API_KEY', '')
-API_URL = 'https://api.wcrss.com/api/v1/articles'
+API_URL = 'https://api.wcrss.com/sapi/articles'
+UA = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
+      '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
 
 # 项目路径
 PROJECT_ROOT = '/Users/zhangbing/jiangjiu-platform'
@@ -34,15 +38,21 @@ def fetch_wcrss_articles():
         print("ERROR: WCRSS_API_KEY not set")
         return []
     
-    url = f"{API_URL}?limit=100"
+    url = f"{API_URL}?recentDays=7&num=100"
     req = urllib.request.Request(url)
     req.add_header('Authorization', f'Bearer {API_KEY}')
     req.add_header('Accept', 'application/json')
-    
+    req.add_header('User-Agent', UA)
+
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read().decode('utf-8'))
-            return data.get('results', [])
+            arts = data.get('articles', [])
+            pubs = data.get('publishers', [])
+            print(f"WCRSS: 订阅公众号 {len(pubs)} 个，服务端返回文章 {len(arts)} 篇")
+            if not arts:
+                print("WCRSS 服务端文章库为空（订阅仍在），需改用其它来源补录，勿据此判定‘无新闻’")
+            return arts
     except Exception as e:
         print(f"API call failed: {e}")
         return []
@@ -144,9 +154,8 @@ def main():
     articles = fetch_wcrss_articles()
     
     if not articles:
-        print("ERROR: 无法获取 WCRSS 文章，使用本地缓存数据")
-        # 使用之前获取的示例数据进行演示
-        articles = get_sample_data()
+        print("WCRSS 无可用文章：本次不写入任何内容（禁止用示例/伪造数据填充知识库）")
+        return len(existing_kb)
     
     print(f"获取到 {len(articles)} 篇文章")
     
