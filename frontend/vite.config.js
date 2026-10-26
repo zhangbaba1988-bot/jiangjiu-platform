@@ -4,7 +4,8 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
-  base: '/',
+  // GitHub Pages 部署在 /jiangjiu-platform/ 子路径，base 必须与之匹配，否则 /assets/* 404 白屏
+  base: process.env.VITE_BASE || '/jiangjiu-platform/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
