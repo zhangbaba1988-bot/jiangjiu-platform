@@ -12,3 +12,4 @@ screenshots_new/
 spider/
 temp_mock_data.py
 wechat_articles_cache.json
+backend/data/*.bak
